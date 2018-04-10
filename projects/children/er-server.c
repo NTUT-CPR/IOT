@@ -70,6 +70,8 @@
 #endif
 
 #include "dev/leds.h"
+#include "dev/sht21.h"  //temporaly
+#include "dev/max44009.h"  //temporaly
 
 /*
  * Resources to be activated need to be imported through the extern keyword.
@@ -107,11 +109,12 @@ extern resource_t res_battery;
 #include "dev/radio-sensor.h"
 extern resource_t res_radio;
 #endif
+
 #if PLATFORM_HAS_SHT11
 #include "dev/sht11/sht11-sensor.h"
 extern resource_t res_sht11;
-#endif
-*/
+#endif*/
+
 
 PROCESS(er_example_server, "Erbium Example Server");
 PROCESS(node_process, "RPL Node");
@@ -180,10 +183,10 @@ PROCESS_THREAD(er_example_server, ev, data)
 //   rest_activate_resource(&res_radio, "sensors/radio");  
 //   SENSORS_ACTIVATE(radio_sensor);  
 // #endif
-// #if PLATFORM_HAS_SHT11
-//   rest_activate_resource(&res_sht11, "sensors/sht11");  
-//   SENSORS_ACTIVATE(sht11_sensor);  
-// #endif
+ /*#if PLATFORM_HAS_SHT11
+   rest_activate_resource(&res_sht11, "sensors/sht11");  
+   SENSORS_ACTIVATE(sht11_sensor);  
+ #endif*/
 // */
 #if WITH_ORCHESTRA
   orchestra_init();
@@ -296,14 +299,40 @@ print_network_status(void)
 
 PROCESS_THREAD(node_process, ev, data)
 {
+
+  static int16_t sht21_present,max44009_present;  //uint16 to int16----important
+  static int16_t temperature, humidity,light;
+
+  
+
+
   static struct etimer etaa;
   PROCESS_BEGIN();
 
-  etimer_set(&etaa, CLOCK_SECOND * 60);
+
+  etimer_set(&etaa, CLOCK_SECOND * 5);
   while(1) {
-    PROCESS_YIELD_UNTIL(etimer_expired(&etaa));
+    PROCESS_YIELD();
+    //PROCESS_YIELD_UNTIL(etimer_expired(&etaa));
     etimer_reset(&etaa);
-    print_network_status();
+
+    
+    PRINTF("============================\n");
+    if(sht21.status(SENSORS_READY)==1) {//sht21_present != SHT21_ERROR
+        temperature = sht21.value(SHT21_READ_TEMP);
+        PRINTF("Temperature: %u.%uC\n", temperature / 100, temperature % 100);
+        humidity = sht21.value(SHT21_READ_RHUM);
+        PRINTF("Rel. humidity: %u.%u%%\n", humidity / 100, humidity % 100);
+      }
+      else{
+        PRINTF("%u\n",sht21.status(SENSORS_READY));
+        PRINTF("SHT21 doesn't open\n");
+      }
+
+
+      PRINTF("============================\n");
+
+
   }
 
   PROCESS_END();

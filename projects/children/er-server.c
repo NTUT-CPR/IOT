@@ -329,6 +329,15 @@ PROCESS_THREAD(node_process, ev, data)
         PRINTF("SHT21 doesn't open\n");
       }
 
+    if(max44009.status(SENSORS_READY)==1) {//max44009_present != MAX44009_ERROR
+        //leds_on(LEDS_RED);
+        light = max44009.value(MAX44009_READ_LIGHT);
+        printf("Light: %u.%ulux\n", light / 100, light % 100);
+      }
+      else{
+        PRINTF("%u\n",max44009.status(SENSORS_READY));
+        PRINTF("max44009 doesn't open\n");
+      }  
 
       PRINTF("============================\n");
 
